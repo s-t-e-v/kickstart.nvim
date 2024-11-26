@@ -102,7 +102,10 @@ vim.g.have_nerd_font = false
 vim.opt.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
--- vim.opt.relativenumber = true
+vim.opt.relativenumber = true
+
+-- No line wrap
+vim.opt.wrap = false
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
@@ -121,8 +124,27 @@ end)
 -- Enable break indent
 vim.opt.breakindent = true
 
+--* Further indent config
+vim.opt.tabstop = 4
+vim.opt.softtabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
+vim.smartindent = true
+
 -- Save undo history
 vim.opt.undofile = true
+
+--* Further backup/undo config
+vim.opt.swapfile = false
+vim.opt.backup = false
+vim.undodir = os.getenv 'HOME' .. '/.vim/undodir/'
+
+--* Search config
+vim.opt.hlsearch = false
+vim.opt.incsearch = true
+
+--* term gui colors on
+vim.opt.termguicolors = true
 
 -- Case-insensitive searching UNLESS \C or one or more capital letters in the search term
 vim.opt.ignorecase = true
@@ -154,6 +176,9 @@ vim.opt.inccommand = 'split'
 -- Show which line your cursor is on
 vim.opt.cursorline = true
 
+-- Allow @ in filenames
+vim.opt.isfname:append '@-@'
+
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
@@ -176,19 +201,62 @@ vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagn
 vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 
 -- TIP: Disable arrow keys in normal mode
--- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
--- vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
--- vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
--- vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
+vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
+vim.keymap.set('n', '<right>', '<cmd>echo "Use l to move!!"<CR>')
+vim.keymap.set('n', '<up>', '<cmd>echo "Use k to move!!"<CR>')
+vim.keymap.set('n', '<down>', '<cmd>echo "Use j to move!!"<CR>')
 
 -- Keybinds to make split navigation easier.
 --  Use CTRL+<hjkl> to switch between windows
 --
 --  See `:help wincmd` for a list of all window commands
+vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
-vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
+--* Explore
+vim.keymap.set('n', '<leader>pv', vim.cmd.Ex)
+
+--* Awesome remaps
+vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv")
+vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv")
+
+vim.keymap.set('n', 'Y', 'yg$')
+vim.keymap.set('n', 'J', 'mzJ`z')
+vim.keymap.set('n', '<C-d>', '<C-d>zz')
+vim.keymap.set('n', '<C-u>', '<C-u>zz')
+vim.keymap.set('n', 'n', 'nzzzv')
+vim.keymap.set('n', 'N', 'Nzzzv')
+
+---* greated remap ever
+vim.keymap.set('x', '<leader>p', '"_dP')
+
+----* next greatest remap ever: asbjornHaland (vim/system yank buffer separation)
+--- vim.keymap.set("n", "<leader>y", '"+y')
+--- vim.keymap.set("v", "<leader>y", '"+y')
+--- vim.keymap.set("n", "<leader>Y", '"+Y')
+
+--- vim.keymap.set("n", "<leader>d", '"_d')
+--- vim.keymap.set("v", "<leader>d", '"_d')
+
+vim.keymap.set('n', 'Q', '<nop>')
+vim.keymap.set('n', '<C-f>', function()
+  if os.getenv 'TMUX' then
+    vim.fn.system "tmux new-window 'tmux-sessionizer'"
+  else
+    vim.fn.system "tmux new-session 'tmux-sessionizer'"
+  end
+end, { silent = true })
+
+----* Quick fix list navigation
+-- vim.keymap.set('n', '<C-k>', '<cmd>cnext<CR>zz')
+-- vim.keymap.set('n', '<C-j>', '<cmd>cprev<CR>zz')
+-- vim.keymap.set('n', '<leader>k', '<cmd>lnext<CR>zz')
+-- vim.keymap.set('n', '<leader>j', '<cmd>lprev<CR>zz')
+
+vim.keymap.set('n', '<leader>s', [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]])
+vim.keymap.set('n', '<leader>x', '<cmd>!chmod +x %<CR>', { silent = true })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -255,7 +323,78 @@ require('lazy').setup({
       },
     },
   },
+  {
+    'github/copilot.vim',
+    config = function()
+      -- Copilot setup
+      vim.g.copilot_no_tab_map = true
+      vim.g.copilot_assume_mapped = true
 
+      -- Key mappings
+      vim.keymap.set('i', '<C-g>', 'copilot#Accept("<CR>")', {
+        expr = true,
+        replace_keycodes = false,
+      })
+      vim.keymap.set('i', '<C-d>', '<Plug>(copilot-accept-word)') -- Accept word
+      vim.keymap.set('i', '<C-f>', '<Plug>(copilot-accept-line)') -- Accept line
+      vim.keymap.set('i', '<C-e>', '<Plug>(copilot-suggest)') -- Trigger suggestion
+      vim.keymap.set('i', '<C-q>', '<Plug>(copilot-dismiss)') -- Dismiss suggestion
+    end,
+  },
+  { -- Vim tmux navigator
+    'christoomey/vim-tmux-navigator',
+    cmd = {
+      'TmuxNavigateLeft',
+      'TmuxNavigateDown',
+      'TmuxNavigateUp',
+      'TmuxNavigateRight',
+      'TmuxNavigatePrevious',
+    },
+    keys = {
+      { '<c-h>', '<cmd><C-U>TmuxNavigateLeft<cr>' },
+      { '<c-j>', '<cmd><C-U>TmuxNavigateDown<cr>' },
+      { '<c-k>', '<cmd><C-U>TmuxNavigateUp<cr>' },
+      { '<c-l>', '<cmd><C-U>TmuxNavigateRight<cr>' },
+      { '<c-\\>', '<cmd><C-U>TmuxNavigatePrevious<cr>' },
+    },
+  },
+  { -- VimBeGood
+    'ThePrimeagen/vim-be-good',
+  },
+  { -- Harpoon
+    'ThePrimeagen/harpoon',
+    init = function()
+      local mark = require 'harpoon.mark'
+      local ui = require 'harpoon.ui'
+
+      -- Harpoon keymaps
+      vim.keymap.set('n', '<leader>a', mark.add_file)
+      vim.keymap.set('n', '<C-e>', ui.toggle_quick_menu)
+
+      vim.keymap.set('n', '<C-h>', function()
+        ui.nav_file(1)
+      end)
+      vim.keymap.set('n', '<C-t>', function()
+        ui.nav_file(2)
+      end)
+      vim.keymap.set('n', '<C-n>', function()
+        ui.nav_file(3)
+      end)
+      vim.keymap.set('n', '<C-s>', function()
+        ui.nav_file(4)
+      end)
+    end,
+  },
+  { -- Undotree
+    'mbbill/undotree',
+    -- Undotree keymaps
+    vim.keymap.set('n', '<leader>u', vim.cmd.UndotreeToggle),
+  },
+  { -- Fugitive
+    'tpope/vim-fugitive',
+    -- Fugitive keymaps
+    vim.keymap.set('n', '<leader>gs', vim.cmd.Git),
+  },
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
   -- This is often very useful to both group configuration, as well as handle
@@ -411,6 +550,11 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+      -- My keympas
+      vim.keymap.set('n', '<C-g>', builtin.git_files, { desc = 'Search git files' })
+      vim.keymap.set('n', '<leader>sp', function()
+        builtin.grep_string { search = vim.fn.input 'Grep > ' }
+      end, { desc = '[S]earch [P]roject' })
 
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
@@ -615,7 +759,7 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
+        clangd = {},
         -- gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
@@ -849,6 +993,10 @@ require('lazy').setup({
 
       -- You can configure highlights by doing something like:
       vim.cmd.hi 'Comment gui=none'
+
+      -- Transparent background [I added it]
+      vim.api.nvim_set_hl(0, 'Normal', { bg = 'none' })
+      vim.api.nvim_set_hl(0, 'NormalFloat', { bg = 'none' })
     end,
   },
 
@@ -898,7 +1046,22 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
+      ensure_installed = {
+        'bash',
+        'c',
+        'cpp',
+        'javascript',
+        'typescript',
+        'diff',
+        'html',
+        'lua',
+        'luadoc',
+        'markdown',
+        'markdown_inline',
+        'query',
+        'vim',
+        'vimdoc',
+      },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
