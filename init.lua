@@ -284,6 +284,10 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end ---@diagnostic disable-next-line: undefined-field
 vim.opt.rtp:prepend(lazypath)
 
+-- Scripts
+
+require 'custom.plugins.cpp_class_gen'
+
 -- [[ Configure and install plugins ]]
 --
 --  To check the current status of your plugins, run
